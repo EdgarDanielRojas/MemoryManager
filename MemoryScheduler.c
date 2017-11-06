@@ -41,6 +41,23 @@ int GetInt (FILE *fp) {
     }
 }
 
+int getTLB(int tlb[][3],int size){
+  int i,tlbn;
+  int smallest=tlb[0][2];
+  for(i=0;i<size;i++){
+    if(tlb[i][2]==0)
+    {
+      tlbn=i;
+      break;
+    }
+    if(tlb[i][2]<smallest){
+      smallest=tlb[i][2];
+      tlbn=i;
+    }
+
+  }
+  return tlbn;
+}
 /***********************************************************************
  *                          Main entry point                           *
  **********************************************************************/
@@ -81,7 +98,7 @@ int main (int argc, const char * argv[]) {
               //printf("%d Frame Entries\n",temp);
               //printf("%d TLB Entries\n",TLBSIZE);
               int tlb[TLBSIZE][3];
-              int rem,n,i,frameN;
+              int rem,n,i,frameN,tlbn,pageEntry,smallest;
               double accessTime,sum;
               int counter=1;
               int hits=0;
@@ -96,7 +113,7 @@ int main (int argc, const char * argv[]) {
                 frame[i][2]=0;
               }
               for(i=0;i<TLBSIZE;i++){
-                tlb[i][0]=0;
+                tlb[i][0]=-1;
                 tlb[i][1]=0;
                 tlb[i][2]=0;
               }
@@ -117,7 +134,7 @@ int main (int argc, const char * argv[]) {
                     caddress[i-1]='0';
                   }
                 }
-                int pageEntry = 0;
+                pageEntry = 0;
                 for(i = LOGADD-OFFSET;i>0;i--){
                   int num = LOGADD-OFFSET-i;
                   if(caddress[i-1] == '1'){
@@ -135,15 +152,19 @@ int main (int argc, const char * argv[]) {
                     break;
                   }
                 }
-                accessTime=accessTime+ttlb;
+                accessTime+=ttlb;
                 if(found==0){
                   accessTime+=tmem;
                   if(pageTable[pageEntry][1]==1){
                     frameN=pageTable[pageEntry][0];
+                    tlbn=getTLB(tlb,TLBSIZE);
+                    tlb[tlbn][0]=pageEntry;
+                    tlb[tlbn][1]=frameN;
+                    tlb[tlbn][2]=counter;
                   }
                   else{
                     accessTime+=tfault;
-                    int smallest=counter;
+                    smallest=counter;
                     for(i=0;i<frameSize;i++){
                       if(frame[i][2]==0){
                         frameN=i;
@@ -158,41 +179,39 @@ int main (int argc, const char * argv[]) {
                       accessTime+=tfault;
                       pageOut++;
                     }
+                    /*for(i=0;i<TLBSIZE;i++){
+                      if(tlb[i][0]==frame[frameN][0]){
+                        tlb[tlbn][0]=-1;
+                        tlb[tlbn][1]=0;
+                        tlb[tlbn][2]=0;
+                        break;
+                      }
+                    }*/
                     pageIn++;
                     pageTable[frame[frameN][0]][1]=0;
                     frame[frameN][0]=pageEntry;
+                    frame[frameN][1]=0;
                     pageTable[pageEntry][0]=frameN;
-                    int tlbn;
-                    smallest=counter;
-                    for(i=0;i<TLBSIZE;i++){
-                      if(tlb[i][2]==0)
-                      {
-                        tlbn=i;
-                        break;
-                      }
-                      if(tlb[i][2]<smallest){
-                        smallest=tlb[i][2];
-                        tlbn=i;
-                      }
-
-                    }
+                    pageTable[pageEntry][1]=1;
+                    //int tlbn;
+                    tlbn=getTLB(tlb,TLBSIZE);
                     tlb[tlbn][0]=pageEntry;
                     tlb[tlbn][1]=frameN;
                     tlb[tlbn][2]=counter;
                   }
                 }
-                if(operation=='W'){
+              if(operation=='W'){
                   frame[frameN][1]=1;
                 }
               frame[frameN][2]=counter;
-              accessTime+=tmem;
+              //accessTime+=tmem;
               counter++;
               sum+=accessTime;
               /*printf("Number: %d\n",address);
               printf("Operation: %c\n",operation);
               printf("Binary: %s\n",caddress);
               printf("Page Entry: %d\n",pageEntry);*/
-              }
+            }
               /*for(i=0;i<frameSize;i++){
                 printf("Page: %d LRU: %d Dirty: %d\n",frame[i][0],frame[i][2],frame[i][1]);
               }
