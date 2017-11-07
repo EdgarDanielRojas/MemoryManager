@@ -1,8 +1,6 @@
 #include <ctype.h>                 /* Used for the isdigit() function */
 #include <stdlib.h>                     /* Used for malloc definition */
 #include <stdio.h>                                /* Used for fprintf */
-#include <string.h>                                /* Used for strcmp */
-#include <assert.h>                      /* Used for the assert macro */
 #include <math.h>
 /***********************************************************************
  *                       Global constant values                        *
@@ -13,6 +11,7 @@
 #define TLBSIZE 8 //!<Constant for the TLB size
 #define NUMPARAMS 2 //!< Constant used to define the number of parameters we must receive.
 
+// Used to get a number from a file passed as a parameter
 int GetInt (FILE *fp) {
     int	c,i;	   /* Character read and integer representation of it */
     int sign = 1;
@@ -41,10 +40,11 @@ int GetInt (FILE *fp) {
     }
 }
 
+// Gets the smallest LRU time from an array passed as parameter and the size of said parameter;
 int getTLB(int tlb[][3],int size){
   int i,tlbn;
-  int smallest=tlb[0][2];
-  for(i=0;i<size;i++){
+  int smallest=tlb[0][2]; //Get the first LRU from the first entry in the TLB
+  for(i=0;i<size;i++){ // The array is searched for a lower LRU or a LRU of zero
     if(tlb[i][2]==0)
     {
       tlbn=i;
@@ -56,8 +56,9 @@ int getTLB(int tlb[][3],int size){
     }
 
   }
-  return tlbn;
+  return tlbn; //Return the index of the lowest LRU in the TLB
 }
+
 /***********************************************************************
  *                          Main entry point                           *
  **********************************************************************/
